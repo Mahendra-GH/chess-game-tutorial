@@ -1,15 +1,12 @@
-FROM node:20 AS build
-RUN mkdir /apps
+FROM node:20-alpine AS build
+WORKDIR /apps
 COPY . /apps/
-RUN npm install && npm run build
+RUN npm install && npm run build && npm install --save-dev vite
 
-FROM nginx:1-alpine-slim
-LABEL project="learning"
-ARG USERNAME=chess
-COPY --from=build /apps/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-# Expose port 80
+FROM nginx:1.27
+LABEL project="nodejs" Author="Mahendra"
+RUN rm -f nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/
+COPY --from=build  /apps/dist/ /user/share/nginx/html/chess/
 EXPOSE 80
-
-# Start NGINX server
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g", "daemon off;"] 
