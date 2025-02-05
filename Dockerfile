@@ -1,10 +1,15 @@
-FROM node:20-alpine
+FROM node:20 AS build
+RUN mkdir /apps
+COPY . /apps/
+RUN npm install && npm run build
+
+FROM nginx:1-alpine-slim
 LABEL project="learning"
 ARG USERNAME=chess
-RUN adduser -D -h /apps -s /bin/sh ${USERNAME}
-USER ${USERNAME}
-WORKDIR /apps
-COPY --chown=${USERNAME}:${USERNAME} . /apps/
-RUN npm install && npm run build
-EXPOSE 4173
-CMD ["npm","run","preview","--", "--host", "0.0.0.0"]
+COPY --from=build /apps/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Expose port 80
+EXPOSE 80
+
+# Start NGINX server
+CMD ["nginx", "-g", "daemon off;"]
